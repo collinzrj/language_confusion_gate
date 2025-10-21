@@ -1,0 +1,1 @@
+accelerate launch --config_file deepspeed_config.yaml --num_processes=2 gate_train.py
