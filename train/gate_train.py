@@ -37,58 +37,57 @@ print("TRAIN_QWEN", TRAIN_QWEN)
 #     # breakpoint()  # Execution will pause here
 #     return original_init(*args, **kwargs)
 
-def load_model(base_path, flash_attention=True):
-    with open(os.path.join(base_path, 'config.json')) as f:
-        config = json.load(f)
-        if config['architectures'][0] == 'Qwen3ForCausalLM':
-            print("load Qwen3Gating")
-            model = Qwen3Gating.from_pretrained(
-                base_path,
-                trust_remote_code=True,
-                # attn_implementation="flash_attention_2",
-                torch_dtype=torch.bfloat16,
-                output_hidden_states=True
-            )
-        elif config['architectures'][0] == 'Qwen2MoeForCausalLM' or config['architectures'][0] == 'Qwen3MoeForCausalLM':
-            print("load Qwen3MoeGating")
-            model = Qwen3MoeGating.from_pretrained(
-                base_path,
-                trust_remote_code=True,
-                attn_implementation="flash_attention_2",
-                torch_dtype=torch.bfloat16,
-                output_hidden_states=True
-            )
-        elif config['architectures'][0] == 'LlamaForCausalLM':
-            model = LlamaGating.from_pretrained(
-                base_path,
-                trust_remote_code=True,
-                attn_implementation="flash_attention_2",
-                torch_dtype=torch.bfloat16,
-                output_hidden_states=True
-            )
-        elif config['architectures'][0] == 'Gemma3ForConditionalGeneration':
-            model = GemmaGating.from_pretrained(
-                base_path,
-                trust_remote_code=True,
-                attn_implementation="eager",
-                torch_dtype=torch.bfloat16,
-                output_hidden_states=True
-            )
-        elif config['architectures'][0] == 'Olmo2ForCausalLM':
-            model = OlmoGating.from_pretrained(
-                base_path,
-                trust_remote_code=True,
-                attn_implementation="flash_attention_2",
-                torch_dtype=torch.bfloat16,
-                output_hidden_states=True
-            )
-        elif config['architectures'][0] == 'GptOssGating':
-            # from transformers import GptOssForCausalLM
-            # model = GptOssForCausalLM.from_pretrained(base_path, torch_dtype="auto", output_hidden_states=True)
-            from confusion_gate import GptOssGating
-            model = GptOssGating.from_pretrained(base_path, torch_dtype="auto", output_hidden_states=True)
-        else:
-            raise NotImplementedError
+def load_model(base_path):
+    config = AutoConfig.from_pretrained(base_path).__dict__
+    if config['architectures'][0] == 'Qwen3ForCausalLM':
+        print("load Qwen3Gating")
+        model = Qwen3Gating.from_pretrained(
+            base_path,
+            trust_remote_code=True,
+            # attn_implementation="flash_attention_2",
+            torch_dtype=torch.bfloat16,
+            output_hidden_states=True
+        )
+    elif config['architectures'][0] == 'Qwen2MoeForCausalLM' or config['architectures'][0] == 'Qwen3MoeForCausalLM':
+        print("load Qwen3MoeGating")
+        model = Qwen3MoeGating.from_pretrained(
+            base_path,
+            trust_remote_code=True,
+            attn_implementation="flash_attention_2",
+            torch_dtype=torch.bfloat16,
+            output_hidden_states=True
+        )
+    elif config['architectures'][0] == 'LlamaForCausalLM':
+        model = LlamaGating.from_pretrained(
+            base_path,
+            trust_remote_code=True,
+            attn_implementation="flash_attention_2",
+            torch_dtype=torch.bfloat16,
+            output_hidden_states=True
+        )
+    elif config['architectures'][0] == 'Gemma3ForConditionalGeneration':
+        model = GemmaGating.from_pretrained(
+            base_path,
+            trust_remote_code=True,
+            attn_implementation="eager",
+            torch_dtype=torch.bfloat16,
+            output_hidden_states=True
+        )
+    elif config['architectures'][0] == 'Olmo2ForCausalLM':
+        model = OlmoGating.from_pretrained(
+            base_path,
+            trust_remote_code=True,
+            attn_implementation="flash_attention_2",
+            torch_dtype=torch.bfloat16,
+            output_hidden_states=True
+        )
+    elif config['architectures'][0] == 'GptOssGating':
+        # from transformers import GptOssForCausalLM
+        # model = GptOssForCausalLM.from_pretrained(base_path, torch_dtype="auto", output_hidden_states=True)
+        from confusion_gate import GptOssGating
+        model = GptOssGating.from_pretrained(base_path, torch_dtype="auto", output_hidden_states=True)
+    else:
+        raise NotImplementedError
     return model
 
 # Define data collator
@@ -142,8 +141,8 @@ class CustomDataCollator:
 if __name__ == "__main__":
     USE_OPEN_SOURCE_DS = os.environ.get('USE_OPEN_SOURCE_DS', 'false').lower() == 'true'
     print("USE_OPEN_SOURCE_DS", USE_OPEN_SOURCE_DS)
-    base_path = os.environ['BASEMODEL_PATH']
-    model_name = os.environ['MODEL_NAME']
+    base_path = sys.argv[1]
+    model_name = sys.argv[2]
     print("gate_train Base model is", base_path)
     token_norm_str = os.environ.get('TOKEN_NORM', 'false').strip().lower()
     should_token_norm = token_norm_str == 'true'
@@ -156,13 +155,8 @@ if __name__ == "__main__":
     print(deepspeed_config)
     from datetime import datetime
     now = datetime.now()
-    if len(sys.argv) >= 3:
-        # top_k = int(sys.argv[1])
-        # top_p = int(sys.argv[2])
-        pass
-    else:
-        top_k = 20
-        top_p = 0.95
+    top_k = 20
+    top_p = 0.95
     formatted_str = now.strftime("%Y-%m-%d-%H:%M:%S")
     output_dir = f"./models/gate-{model_name}-{top_k}k_{int(top_p * 100)}p_{formatted_str}"
     print('output_dir', output_dir)
@@ -219,11 +213,4 @@ if __name__ == "__main__":
     print("current gpu memory", torch.cuda.memory_summary(device=None, abbreviated=True))
     # Start training
     trainer.train()
-    print("trainer.args.should_save", trainer.args.should_save)
-    # if trainer.args.should_save:
-    # this should be called on all device, otherwise it will stuck
-    # but only main process will get the values
-    state_dict = trainer.accelerator.get_state_dict(trainer.deepspeed)
-    if trainer.args.should_save:
-        torch.save(state_dict['code_switch_pre.weight'], os.path.join(output_dir, 'code_switch_pre.pth'))
-        torch.save(state_dict['code_switch_head.weight'], os.path.join(output_dir, 'code_switch_head.pth'))
+    trainer.save_model(output_dir)
