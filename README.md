@@ -26,5 +26,5 @@ python score_result flores [OUTPUT_PATH]
 ```
 
 ## TODO
-- [] upload gate weights
-- [] improve the code and Instruction
+- [ ] upload gate weights
+- [ ] improve the code and Instruction
