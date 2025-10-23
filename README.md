@@ -11,12 +11,12 @@ Paper: [**Language Confusion Gate: Language‑Aware Decoding Through Model Self�
 </p>
 
 ## Highlights
-
 * **Drop‑in at decode time.** Filters tokens by language family *only when needed*, leaving normal decoding untouched otherwise.
-* **Norm-adjusted Self-distillation** The gate learns to predict allowed next‑token language families by distilling the model's own logits.
-* **Compatible with models across different architectures** Evaluated on families like Qwen3, GPT‑OSS, Gemma3, and Llama 3.1.
+* **Single gate for all languages** No configurations is required for different languages, LCG automatically determines when and which language to mask
+* **Norm-adjusted Self-distillation.** The gate learns to predict allowed next‑token language families by distilling the model's own logits.
+* **Compatible with models across different architectures.** Evaluated on families like Qwen3, GPT‑OSS, Gemma3, and Llama 3.1.
 * **Minimal overhead.** Very low overhead, works together with speculative decoding.
-* **Don't harm normal performance** Intervention is rare and doesn’t harm task quality.
+* **Don't harm normal performance.** Intervention is rare and doesn’t harm task quality.
 
 ---
 
